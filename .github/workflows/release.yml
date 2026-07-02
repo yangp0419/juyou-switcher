@@ -140,6 +140,7 @@ jobs:
 
           printf '%s\n' "$KEY_B64" > "$KEY_PATH"
           chmod 600 "$KEY_PATH"
+          echo "TAURI_SIGNING_PRIVATE_KEY=$KEY_B64" >> "$GITHUB_ENV"
           echo "TAURI_SIGNING_PRIVATE_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
           if [ -n "$SIGNING_KEY_PASSWORD" ]; then
