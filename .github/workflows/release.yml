@@ -115,7 +115,7 @@ jobs:
           if (raw.startsWith('untrusted comment:')) {
             encoded = Buffer.from(`${raw}\n`, 'utf8').toString('base64');
           } else {
-            encoded = raw.replace(/\s+/g, '');
+            encoded = raw.replace(/\s+/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
             let decoded;
             try {
               decoded = Buffer.from(encoded, 'base64').toString('utf8');
