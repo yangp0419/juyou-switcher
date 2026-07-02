@@ -225,9 +225,27 @@ fn merge_codex_global_config_sections(
         .map_err(|e| AppError::Message(format!("Invalid Codex live config.toml: {e}")))?;
 
     for key in CODEX_GLOBAL_CONFIG_KEYS {
-        if let Some(item) = live_doc.get(key) {
-            target_doc[key] = item.clone();
+        let Some(item) = live_doc.get(key) else {
+            continue;
+        };
+
+        if *key == "mcp_servers" {
+            if let Some(live_servers) = item.as_table_like() {
+                if let Some(target_servers) = target_doc
+                    .get_mut("mcp_servers")
+                    .and_then(|target| target.as_table_like_mut())
+                {
+                    for (server_id, server_item) in live_servers.iter() {
+                        if !target_servers.contains_key(server_id) {
+                            target_servers.insert(server_id, server_item.clone());
+                        }
+                    }
+                    continue;
+                }
+            }
         }
+
+        target_doc[key] = item.clone();
     }
 
     Ok(target_doc.to_string())
