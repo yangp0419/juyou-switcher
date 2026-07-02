@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>juyou-switcher - 图标设计</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+      background: linear-gradient(135deg, #f6f8fb 0%, #e8f2ff 46%, #f0f7ff 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .header {
+      text-align: center;
+      max-width: 800px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      width: 100%;
+      max-width: 1400px;
+    }
+
+    .icon-card {
+      background: white;
+      border: 1px solid #dbe4ef;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .icon-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(11, 101, 216, 0.15);
+      border-color: #0b65d8;
+    }
+
+    .icon-preview {
+      width: 256px;
+      height: 256px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f8fafc 0%, #eef5ff 100%);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-preview::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 30%, rgba(11, 101, 216, 0.08), transparent 70%);
+    }
+
+    .icon-info {
+      text-align: center;
+      width: 100%;
+    }
+
+    .icon-info h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #172033;
+      margin-bottom: 8px;
+    }
+
+    .icon-info p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 12px 24px;
+      background: #0b65d8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(11, 101, 216, 0.24);
+    }
+
+    .download-btn:hover {
+      background: #095ac2;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(11, 101, 216, 0.32);
+    }
+
+    .download-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 图标样式 - 设计1：双向箭头环绕 */
+    .icon-1 {
+      width: 200px;
+      height: 200px;
+      position: relative;
+    }
+
+    .icon-1-circle {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0b65d8 0%, #1f8fff 100%);
+      box-shadow: 0 8px 24px rgba(11, 101, 216, 0.3), inset 0 2px 8px rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-1-ring {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .icon-1-arrows {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-1-arrow {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+    }
+
+    .icon-1-arrow:nth-child(1) {
+      top: 30px;
+      animation: pulse1 2s ease-in-out infinite;
+    }
+
+    .icon-1-arrow:nth-child(2) {
+      bottom: 30px;
+      transform: rotate(180deg);
+      animation: pulse2 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse1 {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-4px); opacity: 0.8; }
+    }
+
+    @keyframes pulse2 {
+      0%, 100% { transform: rotate(180deg) translateY(0); opacity: 1; }
+      50% { transform: rotate(180deg) translateY(-4px); opacity: 0.8; }
+    }
+
+    /* 图标样式 - 设计2：切换开关 */
+    .icon-2 {
+      width: 200px;
+      height: 200px;
+      position: relative;
+    }
+
+    .icon-2-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #0b65d8 0%, #1f8fff 100%);
+      box-shadow: 0 8px 24px rgba(11, 101, 216, 0.3);
+      transform: rotate(45deg);
+    }
+
+    .icon-2-switch {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 60px;
+      background: white;
+      border-radius: 30px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      padding: 6px;
+    }
+
+    .icon-2-toggle {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #0b65d8 0%, #1f8fff 100%);
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(11, 101, 216, 0.4);
+      animation: toggle 3s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    @keyframes toggle {
+      0%, 40%, 100% { transform: translateX(0); }
+      50%, 90% { transform: translateX(60px); }
+    }
+
+    /* 图标样式 - 设计3：API节点网络 */
+    .icon-3 {
+      width: 200px;
+      height: 200px;
+      position: relative;
+    }
+
+    .icon-3-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0b65d8 0%, #1f8fff 100%);
+      box-shadow: 0 8px 24px rgba(11, 101, 216, 0.3);
+    }
+
+    .icon-3-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #0b65d8;
+      font-weight: bold;
+      animation: centerPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes centerPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    .icon-3-nodes {
+      position: absolute;
+      inset: 0;
+    }
+
+    .icon-3-node {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .icon-3-node:nth-child(1) {
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: nodePulse 2s ease-in-out infinite 0s;
+    }
+
+    .icon-3-node:nth-child(2) {
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      animation: nodePulse 2s ease-in-out infinite 0.4s;
+    }
+
+    .icon-3-node:nth-child(3) {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: nodePulse 2s ease-in-out infinite 0.8s;
+    }
+
+    .icon-3-node:nth-child(4) {
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      animation: nodePulse 2s ease-in-out infinite 1.2s;
+    }
+
+    @keyframes nodePulse {
+      0%, 100% { opacity: 0.6; transform: translate(var(--tx, 0), var(--ty, 0)) scale(1); }
+      50% { opacity: 1; transform: translate(var(--tx, 0), var(--ty, 0)) scale(1.2); }
+    }
+
+    .icon-3-node:nth-child(1) { --tx: -50%; --ty: 0; }
+    .icon-3-node:nth-child(2) { --tx: 0; --ty: -50%; }
+    .icon-3-node:nth-child(3) { --tx: -50%; --ty: 0; }
+    .icon-3-node:nth-child(4) { --tx: 0; --ty: -50%; }
+
+    /* 图标样式 - 设计4：立体切换 (推荐) */
+    .icon-4 {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotate3d 8s linear infinite;
+    }
+
+    @keyframes rotate3d {
+      0% { transform: rotateY(0deg) rotateX(5deg); }
+      100% { transform: rotateY(360deg) rotateX(5deg); }
+    }
+
+    .icon-4-face {
+      position: absolute;
+      inset: 20px;
+      border-radius: 32px;
+      background: linear-gradient(135deg, #0b65d8 0%, #1f8fff 100%);
+      box-shadow: 0 12px 32px rgba(11, 101, 216, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateZ(30px);
+    }
+
+    .icon-4-symbol {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: #0b65d8;
+      font-weight: bold;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .icon-4-back {
+      position: absolute;
+      inset: 20px;
+      border-radius: 32px;
+      background: linear-gradient(135deg, #1f8fff 0%, #0b65d8 100%);
+      opacity: 0.3;
+      transform: translateZ(-30px);
+    }
+
+    .instructions {
+      max-width: 800px;
+      background: white;
+      border: 1px solid #dbe4ef;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
+    }
+
+    .instructions h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .instructions h2::before {
+      content: '💡';
+      font-size: 24px;
+    }
+
+    .instructions ol {
+      padding-left: 24px;
+      color: #475467;
+      line-height: 1.8;
+    }
+
+    .instructions li {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .instructions code {
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      color: #0b65d8;
+      font-weight: 600;
+    }
+
+    .tag {
+      display: inline-block;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      color: #0b65d8;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid #bae6fd;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 juyou-switcher 图标设计方案</h1>
+    <p>基于你的项目配色（蓝色系 #0b65d8）和功能定位（API 切换器）设计的 4 款图标方案</p>
+  </div>
+
+  <div class="icon-grid">
+    <!-- 设计1 -->
+    <div class="icon-card">
+      <div class="icon-preview">
+        <div class="icon-1">
+          <div class="icon-1-circle"></div>
+          <div class="icon-1-ring"></div>
+          <div class="icon-1-arrows">
+            <svg class="icon-1-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L12 20M12 4L8 8M12 4L16 8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="icon-1-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L12 20M12 4L8 8M12 4L16 8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="icon-info">
+        <h3>双向箭头环绕</h3>
+        <p>代表 API 切换的双向流动，圆环象征连接与循环</p>
+        <span class="tag">简洁大方</span>
+      </div>
+      <button class="download-btn" onclick="downloadIcon(1)">下载此图标</button>
+    </div>
+
+    <!-- 设计2 -->
+    <div class="icon-card">
+      <div class="icon-preview">
+        <div class="icon-2">
+          <div class="icon-2-bg"></div>
+          <div class="icon-2-switch">
+            <div class="icon-2-toggle">⇄</div>
+          </div>
+        </div>
+      </div>
+      <div class="icon-info">
+        <h3>动态切换开关</h3>
+        <p>直观展示切换功能，开关动画体现实时响应</p>
+        <span class="tag">直观易懂</span>
+      </div>
+      <button class="download-btn" onclick="downloadIcon(2)">下载此图标</button>
+    </div>
+
+    <!-- 设计3 -->
+    <div class="icon-card">
+      <div class="icon-preview">
+        <div class="icon-3">
+          <div class="icon-3-bg"></div>
+          <div class="icon-3-center">S</div>
+          <div class="icon-3-nodes">
+            <div class="icon-3-node"></div>
+            <div class="icon-3-node"></div>
+            <div class="icon-3-node"></div>
+            <div class="icon-3-node"></div>
+          </div>
+        </div>
+      </div>
+      <div class="icon-info">
+        <h3>API 节点网络</h3>
+        <p>中央 Switch 连接四周节点，象征 API 管理中心</p>
+        <span class="tag">专业感强</span>
+      </div>
+      <button class="download-btn" onclick="downloadIcon(3)">下载此图标</button>
+    </div>
+
+    <!-- 设计4 (推荐) -->
+    <div class="icon-card" style="border: 2px solid #0b65d8;">
+      <div class="icon-preview">
+        <div class="icon-4">
+          <div class="icon-4-back"></div>
+          <div class="icon-4-face">
+            <div class="icon-4-symbol">⇄</div>
+          </div>
+        </div>
+      </div>
+      <div class="icon-info">
+        <h3>立体切换图标 ⭐ 推荐</h3>
+        <p>现代化立体设计，3D 效果增强品牌识别度，最符合你的项目风格</p>
+        <span class="tag">现代时尚</span>
+        <span class="tag">品牌感强</span>
+      </div>
+      <button class="download-btn" onclick="downloadIcon(4)">下载此图标 (推荐)</button>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h2>如何使用这些图标</h2>
+    <ol>
+      <li>点击你喜欢的图标下方的「下载此图标」按钮，会下载一个 HTML 文件</li>
+      <li>在浏览器中打开下载的 HTML 文件，对图标进行截图（建议使用 macOS 自带截图工具）</li>
+      <li>或者使用 <code>pnpm tauri icon your-icon.png</code> 命令自动生成所有尺寸的图标</li>
+      <li>生成的图标会自动替换到 <code>src-tauri/icons/</code> 目录</li>
+      <li>重新运行 <code>pnpm tauri build</code> 构建应用即可看到新图标</li>
+    </ol>
+  </div>
+
+  <script>
+    function downloadIcon(version) {
+      const iconHTML = generateIconHTML(version);
+      const blob = new Blob([iconHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `juyou-switcher-icon-v${version}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function generateIconHTML(version) {
+      const iconContent = document.querySelector(`.icon-${version}`).outerHTML;
+      const styles = Array.from(document.styleSheets[0].cssRules)
+        .filter(rule => rule.selectorText && rule.selectorText.includes(`icon-${version}`))
+        .map(rule => rule.cssText)
+        .join('\n');
+
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>juyou-switcher Icon V${version}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1024px;
+      height: 1024px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+    ${styles}
+  </style>
+</head>
+<body>
+  <div style="transform: scale(2.5);">
+    ${iconContent}
+  </div>
+</body>
+</html>`;
+    }
+  </script>
+</body>
+</html>

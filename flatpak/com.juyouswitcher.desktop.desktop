@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=聚游助手
+Comment=All-in-One Assistant for Claude Code, Codex & Gemini CLI
+Exec=juyou-switcher
+Icon=com.juyouswitcher.desktop
+Terminal=false
+Categories=Utility;Development;
+StartupNotify=true
