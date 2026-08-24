@@ -1,19 +1,19 @@
-import { KeyRound, Smartphone } from "lucide-react";
+import { KeyRound, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface LoginModalProps {
-  loginMode: "password" | "phone";
-  setLoginMode: (mode: "password" | "phone") => void;
+  loginMode: "password" | "email";
+  setLoginMode: (mode: "password" | "email") => void;
   loginForm: { username: string; password: string };
   setLoginForm: (form: { username: string; password: string }) => void;
-  phoneLoginForm: { phone: string; code: string };
-  setPhoneLoginForm: (form: { phone: string; code: string }) => void;
+  emailLoginForm: { email: string; code: string };
+  setEmailLoginForm: (form: { email: string; code: string }) => void;
   loginLoading: boolean;
-  phoneCodeLoading: boolean;
-  phoneCodeCountdown: number;
+  emailCodeLoading: boolean;
+  emailCodeCountdown: number;
   onLogin: () => void;
-  onSendPhoneCode: () => void;
+  onSendEmailCode: () => void;
   onClose: () => void;
 }
 
@@ -22,22 +22,18 @@ const fieldClass =
 const inputClass =
   "min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-[#172033] outline-none ring-0 placeholder:text-[#a3adbd] focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none";
 
-function normalizePhoneInput(value: string): string {
-  return value.replace(/\D/g, "").slice(0, 11);
-}
-
 export function LoginModal({
   loginMode,
   setLoginMode,
   loginForm,
   setLoginForm,
-  phoneLoginForm,
-  setPhoneLoginForm,
+  emailLoginForm,
+  setEmailLoginForm,
   loginLoading,
-  phoneCodeLoading,
-  phoneCodeCountdown,
+  emailCodeLoading,
+  emailCodeCountdown,
   onLogin,
-  onSendPhoneCode,
+  onSendEmailCode,
   onClose,
 }: LoginModalProps) {
   return (
@@ -49,23 +45,23 @@ export function LoginModal({
         className="w-[330px] rounded-2xl border border-[#dbe4ef] bg-white px-6 py-7 text-center shadow-[0_18px_45px_rgba(16,24,40,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-[#172033]">手机号登录</h2>
+        <h2 className="text-xl font-bold text-[#172033]">邮箱登录</h2>
         <p className="mt-2 text-sm font-medium text-[#7c8aa1]">请先登录</p>
 
         <div className="mt-5 grid grid-cols-2 gap-1 rounded-xl border border-[#dbe4ef] bg-[#f3f7fc] p-1 text-xs font-bold text-[#667085] shadow-inner shadow-slate-200/70">
           <button
             type="button"
-            onClick={() => setLoginMode("phone")}
-            aria-pressed={loginMode === "phone"}
+            onClick={() => setLoginMode("email")}
+            aria-pressed={loginMode === "email"}
             className={cn(
               "h-9 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b65d8]/25",
-              loginMode === "phone" &&
+              loginMode === "email" &&
                 "border border-white bg-white text-[#0b65d8] shadow-[0_5px_14px_rgba(15,65,120,0.12)]",
-              loginMode !== "phone" &&
+              loginMode !== "email" &&
                 "text-[#7c8aa1] hover:bg-white/70 hover:text-[#344054]",
             )}
           >
-            手机登录
+            邮箱登录
           </button>
           <button
             type="button"
@@ -88,22 +84,22 @@ export function LoginModal({
             <>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#8a96a8]">
-                  手机号
+                  邮箱、手机号或用户名
                 </label>
                 <div className={fieldClass}>
-                  <Smartphone className="h-4 w-4 text-[#98a2b3] transition-colors group-focus-within:text-[#0b65d8]" />
+                  <Mail className="h-4 w-4 text-[#98a2b3] transition-colors group-focus-within:text-[#0b65d8]" />
                   <input
-                    type="tel"
-                    inputMode="tel"
+                    type="text"
+                    autoComplete="username"
                     value={loginForm.username}
                     onChange={(e) =>
                       setLoginForm({
                         ...loginForm,
-                        username: normalizePhoneInput(e.target.value),
+                        username: e.target.value,
                       })
                     }
                     onKeyDown={(e) => e.key === "Enter" && onLogin()}
-                    placeholder="请输入手机号"
+                    placeholder="请输入邮箱、手机号或用户名"
                     className={inputClass}
                   />
                 </div>
@@ -134,22 +130,23 @@ export function LoginModal({
             <>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#8a96a8]">
-                  手机号
+                  邮箱
                 </label>
                 <div className={fieldClass}>
-                  <Smartphone className="h-4 w-4 text-[#98a2b3] transition-colors group-focus-within:text-[#0b65d8]" />
+                  <Mail className="h-4 w-4 text-[#98a2b3] transition-colors group-focus-within:text-[#0b65d8]" />
                   <input
-                    type="tel"
-                    inputMode="tel"
-                    value={phoneLoginForm.phone}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={emailLoginForm.email}
                     onChange={(e) =>
-                      setPhoneLoginForm({
-                        ...phoneLoginForm,
-                        phone: normalizePhoneInput(e.target.value),
+                      setEmailLoginForm({
+                        ...emailLoginForm,
+                        email: e.target.value,
                       })
                     }
                     onKeyDown={(e) => e.key === "Enter" && onLogin()}
-                    placeholder="请输入手机号"
+                    placeholder="请输入邮箱"
                     className={inputClass}
                   />
                 </div>
@@ -163,10 +160,10 @@ export function LoginModal({
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={phoneLoginForm.code}
+                    value={emailLoginForm.code}
                     onChange={(e) =>
-                      setPhoneLoginForm({
-                        ...phoneLoginForm,
+                      setEmailLoginForm({
+                        ...emailLoginForm,
                         code: e.target.value.replace(/\D/g, "").slice(0, 6),
                       })
                     }
@@ -176,13 +173,13 @@ export function LoginModal({
                   />
                   <button
                     type="button"
-                    onClick={onSendPhoneCode}
-                    disabled={phoneCodeLoading || phoneCodeCountdown > 0}
+                    onClick={onSendEmailCode}
+                    disabled={emailCodeLoading || emailCodeCountdown > 0}
                     className="shrink-0 rounded-md px-1.5 py-1 text-xs font-bold text-[#0b65d8] transition-colors hover:bg-[#e7f0ff] disabled:bg-transparent disabled:text-[#98a2b3]"
                   >
-                    {phoneCodeCountdown > 0
-                      ? `${phoneCodeCountdown}s`
-                      : phoneCodeLoading
+                    {emailCodeCountdown > 0
+                      ? `${emailCodeCountdown}s`
+                      : emailCodeLoading
                         ? "发送中"
                         : "获取验证码"}
                   </button>
@@ -201,7 +198,7 @@ export function LoginModal({
         </Button>
 
         <p className="mt-5 text-xs font-medium text-[#98a2b3]">
-          未注册的手机号将会自动注册
+          未注册的邮箱将会自动注册
         </p>
       </div>
     </div>

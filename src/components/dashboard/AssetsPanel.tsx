@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { CreditCard, Download, RefreshCw, Zap } from "lucide-react";
+import { CreditCard, RefreshCw, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { TopupRecord } from "@/services/backend";
@@ -47,28 +47,8 @@ export function AssetsPanel({
           <div className="mb-4 text-sm font-semibold text-[#667085]">
             账户余额 (CNY)
           </div>
-          <div className="mb-6 text-4xl font-bold text-[#0b65d8]">
+          <div className="mb-2 text-4xl font-bold text-[#0b65d8]">
             ¥{currentUser ? (currentUser.quota / 500000).toFixed(2) : "0.00"}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                // 滚动到快速充值区域
-                const element = document.querySelector(
-                  '[data-section="quick-topup"]',
-                );
-                if (element) {
-                  element.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }
-              }}
-              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#0b65d8] text-sm font-bold text-white hover:bg-[#095ac2]"
-            >
-              <Download className="h-4 w-4" />
-              立即充值
-            </button>
           </div>
         </div>
 

@@ -206,8 +206,8 @@ export function SettingsPanel({
                           "用户"}
                       </div>
                       <div className="mt-1 text-xs text-[#64748b]">
-                        {currentUser.phone ||
-                          currentUser.email ||
+                        {currentUser.email ||
+                          currentUser.phone ||
                           currentUser.username}
                       </div>
                     </div>
@@ -227,7 +227,7 @@ export function SettingsPanel({
                       登录密码
                     </div>
                     <div className="mt-1 text-xs text-[#64748b]">
-                      用于之后通过手机号和密码登录。
+                      用于之后通过邮箱、手机号或用户名和密码登录。
                     </div>
                   </div>
                   <button
@@ -357,7 +357,7 @@ export function SettingsPanel({
             <div className="mb-5">
               <h3 className="text-lg font-bold text-[#172033]">设置密码</h3>
               <p className="mt-1 text-xs text-[#64748b]">
-                设置后可使用手机号和密码登录。
+                设置后可使用邮箱、手机号或用户名和密码登录。
               </p>
             </div>
 

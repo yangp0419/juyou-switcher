@@ -35,15 +35,15 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface PhoneCodeLoginRequest {
-  phone: string;
+export interface EmailCodeLoginRequest {
+  email: string;
   code: string;
   aff_code?: string;
   turnstile?: string;
 }
 
-export interface SendPhoneCodeRequest {
-  phone: string;
+export interface SendEmailCodeRequest {
+  email: string;
   turnstile?: string;
 }
 

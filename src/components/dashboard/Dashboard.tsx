@@ -23,6 +23,7 @@ import type { ChatMessage } from "@/services/backend/chat";
 import type { AppId } from "@/lib/api";
 import { providersApi } from "@/lib/api";
 import { extractErrorMessage } from "@/utils/errorUtils";
+import { isGptModelName } from "@/utils/modelCompatibility";
 import { LoginModal } from "@/components/dashboard/LoginModal";
 import { PaymentQrModal } from "@/components/dashboard/PaymentQrModal";
 import {
@@ -36,6 +37,7 @@ import { ExperiencePanel } from "@/components/dashboard/ExperiencePanel";
 import { AssetsPanel } from "@/components/dashboard/AssetsPanel";
 import { SettingsPanel } from "@/components/dashboard/SettingsPanel";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAINLAND_PHONE_RE = /^1[3-9]\d{9}$/;
 const LOGS_PAGE_SIZE = 10;
 const QUICK_SETUP_TOKEN_PAGE_SIZE = 100;
@@ -51,6 +53,10 @@ interface ChatStats {
   cost: number;
   costSource: ChatCostSource;
   logId?: number;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
 
 function normalizePhone(phone: string): string {
@@ -166,15 +172,15 @@ export function Dashboard() {
   const [pendingViewAfterLogin, setPendingViewAfterLogin] = useState<
     "quickStart" | "apiKeys" | "dataPanel" | "experience" | "assets" | null
   >(null);
-  const [loginMode, setLoginMode] = useState<"password" | "phone">("phone");
+  const [loginMode, setLoginMode] = useState<"password" | "email">("email");
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
-  const [phoneLoginForm, setPhoneLoginForm] = useState({
-    phone: "",
+  const [emailLoginForm, setEmailLoginForm] = useState({
+    email: "",
     code: "",
   });
   const [loginLoading, setLoginLoading] = useState(false);
-  const [phoneCodeLoading, setPhoneCodeLoading] = useState(false);
-  const [phoneCodeCountdown, setPhoneCodeCountdown] = useState(0);
+  const [emailCodeLoading, setEmailCodeLoading] = useState(false);
+  const [emailCodeCountdown, setEmailCodeCountdown] = useState(0);
   const [tokens, setTokens] = useState<JuyouTokenType[]>([]);
   const [tokensLoading, setTokensLoading] = useState(false);
   const [tokensPage, setTokensPage] = useState(1);
@@ -235,12 +241,12 @@ export function Dashboard() {
   const isLoggedIn = currentUser !== null;
 
   useEffect(() => {
-    if (phoneCodeCountdown <= 0) return;
+    if (emailCodeCountdown <= 0) return;
     const timer = window.setTimeout(() => {
-      setPhoneCodeCountdown((value) => Math.max(0, value - 1));
+      setEmailCodeCountdown((value) => Math.max(0, value - 1));
     }, 1000);
     return () => window.clearTimeout(timer);
-  }, [phoneCodeCountdown]);
+  }, [emailCodeCountdown]);
 
   // 加载可用模型列表（登录后）
   useEffect(() => {
@@ -778,38 +784,41 @@ export function Dashboard() {
   };
 
   const handleLogin = async () => {
-    const passwordPhone = normalizePhone(loginForm.username);
-    if (loginMode === "password" && (!passwordPhone || !loginForm.password)) {
-      toast.error("请输入手机号和密码");
-      return;
-    }
-    if (loginMode === "password" && !MAINLAND_PHONE_RE.test(passwordPhone)) {
-      toast.error("请输入有效的中国大陆手机号");
+    const passwordAccount = loginForm.username.trim();
+    const passwordEmail = normalizeEmail(passwordAccount);
+    const passwordPhone = normalizePhone(passwordAccount);
+    if (loginMode === "password" && (!passwordAccount || !loginForm.password)) {
+      toast.error("请输入邮箱、手机号或用户名和密码");
       return;
     }
 
-    const phone = normalizePhone(phoneLoginForm.phone);
-    const code = phoneLoginForm.code.trim();
-    if (loginMode === "phone" && (!phone || !code)) {
-      toast.error("请输入手机号和验证码");
+    const email = normalizeEmail(emailLoginForm.email);
+    const code = emailLoginForm.code.trim();
+    if (loginMode === "email" && (!email || !code)) {
+      toast.error("请输入邮箱和验证码");
       return;
     }
-    if (loginMode === "phone" && !MAINLAND_PHONE_RE.test(phone)) {
-      toast.error("请输入有效的中国大陆手机号");
+    if (loginMode === "email" && !EMAIL_RE.test(email)) {
+      toast.error("请输入有效的邮箱地址");
       return;
     }
 
     setLoginLoading(true);
     try {
       const user =
-        loginMode === "phone"
-          ? await JuyouUser.loginByPhoneCode({ phone, code })
+        loginMode === "email"
+          ? await JuyouUser.loginByEmailCode({ email, code })
           : await JuyouUser.login({
-              username: passwordPhone,
+              username: EMAIL_RE.test(passwordEmail)
+                ? passwordEmail
+                : MAINLAND_PHONE_RE.test(passwordPhone) &&
+                    /^[\d\s-]+$/.test(passwordAccount)
+                  ? passwordPhone
+                  : passwordAccount,
               password: loginForm.password,
             });
       if ((user as { require_2fa?: boolean }).require_2fa) {
-        toast.error("该账号开启了两步验证，请使用手机号密码登录");
+        toast.error("该账号开启了两步验证，请使用密码登录");
         return;
       }
       persistLoggedInUser(user);
@@ -827,27 +836,27 @@ export function Dashboard() {
     }
   };
 
-  const handleSendPhoneCode = async () => {
-    const phone = normalizePhone(phoneLoginForm.phone);
-    if (!phone) {
-      toast.error("请输入手机号");
+  const handleSendEmailCode = async () => {
+    const email = normalizeEmail(emailLoginForm.email);
+    if (!email) {
+      toast.error("请输入邮箱");
       return;
     }
-    if (!MAINLAND_PHONE_RE.test(phone)) {
-      toast.error("请输入有效的中国大陆手机号");
+    if (!EMAIL_RE.test(email)) {
+      toast.error("请输入有效的邮箱地址");
       return;
     }
 
-    setPhoneCodeLoading(true);
+    setEmailCodeLoading(true);
     try {
-      await JuyouUser.sendPhoneLoginCode({ phone });
-      setPhoneLoginForm((form) => ({ ...form, phone }));
-      setPhoneCodeCountdown(60);
+      await JuyouUser.sendEmailLoginCode({ email });
+      setEmailLoginForm((form) => ({ ...form, email }));
+      setEmailCodeCountdown(60);
       toast.success("验证码已发送");
     } catch (err: any) {
       toast.error(err.message || "验证码发送失败");
     } finally {
-      setPhoneCodeLoading(false);
+      setEmailCodeLoading(false);
     }
   };
 
@@ -892,6 +901,10 @@ export function Dashboard() {
 
     try {
       const appId = selectedAgent;
+      if (appId === "codex" && !isGptModelName(selectedModel)) {
+        toast.error("Codex 仅支持配置 GPT 模型");
+        return;
+      }
       toast.loading(`正在配置 ${appId.toUpperCase()}...`, {
         id: "quick-setup",
       });
@@ -1212,13 +1225,13 @@ export function Dashboard() {
           setLoginMode={setLoginMode}
           loginForm={loginForm}
           setLoginForm={setLoginForm}
-          phoneLoginForm={phoneLoginForm}
-          setPhoneLoginForm={setPhoneLoginForm}
+          emailLoginForm={emailLoginForm}
+          setEmailLoginForm={setEmailLoginForm}
           loginLoading={loginLoading}
-          phoneCodeLoading={phoneCodeLoading}
-          phoneCodeCountdown={phoneCodeCountdown}
+          emailCodeLoading={emailCodeLoading}
+          emailCodeCountdown={emailCodeCountdown}
           onLogin={handleLogin}
-          onSendPhoneCode={handleSendPhoneCode}
+          onSendEmailCode={handleSendEmailCode}
           onClose={() => setShowLoginModal(false)}
         />
       )}

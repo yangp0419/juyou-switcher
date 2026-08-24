@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { Brain, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { getIcon } from "@/icons/extracted";
 import { cn } from "@/lib/utils";
 import type { AppId } from "@/lib/api";
 import type { JuyouModel as JuyouModelType } from "@/services/backend/types";
+import { isGptModelName } from "@/utils/modelCompatibility";
 
 const quickStartAgents: {
   id: AppId;
@@ -171,7 +172,9 @@ function getModelVendor(modelName: string): ModelVendorId {
     (item) =>
       item.id !== "all" &&
       item.id !== "other" &&
-      item.prefixes.some((prefix) => name.startsWith(prefix)),
+      item.prefixes.some(
+        (prefix) => name.startsWith(prefix) || name.includes(`/${prefix}`),
+      ),
   );
 
   return vendor?.id ?? "other";
@@ -228,17 +231,28 @@ export function QuickStartPanel({
   const [activeModelVendor, setActiveModelVendor] =
     useState<ModelVendorId>("all");
   const modelOptions = useMemo<QuickStartModel[]>(() => {
-    if (availableModels && availableModels.length > 0) {
-      return availableModels
-        .map((model) => ({
-          id: model.model_name,
-          name: model.model_name,
-        }))
-        .sort(compareModelsByVersionDesc);
-    }
+    const models =
+      availableModels && availableModels.length > 0
+        ? availableModels.map((model) => ({
+            id: model.model_name,
+            name: model.model_name,
+          }))
+        : fallbackModels;
 
-    return [...fallbackModels].sort(compareModelsByVersionDesc);
-  }, [availableModels]);
+    return models
+      .filter((model) => selectedAgent !== "codex" || isGptModelName(model.id))
+      .sort(compareModelsByVersionDesc);
+  }, [availableModels, selectedAgent]);
+
+  useEffect(() => {
+    setActiveModelVendor(selectedAgent === "codex" ? "gpt" : "all");
+  }, [selectedAgent]);
+
+  useEffect(() => {
+    if (modelsLoading) return;
+    if (modelOptions.some((model) => model.id === selectedModel)) return;
+    setSelectedModel(modelOptions[0]?.id ?? "");
+  }, [modelOptions, modelsLoading, selectedModel, setSelectedModel]);
 
   const availableModelVendors = useMemo(() => {
     const vendorCounts = modelOptions.reduce<Record<string, number>>(
@@ -428,6 +442,7 @@ export function QuickStartPanel({
             </div>
             <Button
               onClick={handleQuickSetup}
+              disabled={modelsLoading || modelOptions.length === 0}
               className="h-10 rounded-md bg-[#0b65d8] px-5 text-xs font-bold text-white shadow-[0_8px_16px_rgba(11,101,216,0.28)] hover:bg-[#095ac2]"
             >
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />

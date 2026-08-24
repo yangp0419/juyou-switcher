@@ -2,12 +2,12 @@ import { info as logInfo } from "@tauri-apps/plugin-log";
 import { request } from "./client";
 import type {
   JuyouUser,
+  EmailCodeLoginRequest,
   LoginRequest,
-  PhoneCodeLoginRequest,
-  SendPhoneCodeRequest,
+  SendEmailCodeRequest,
 } from "./types";
 
-const PHONE_LOGIN_CODE_ENDPOINT = "/api/verification/phone-login";
+const EMAIL_LOGIN_CODE_ENDPOINT = "/api/verification/email-login";
 
 function logLoginResponse(source: string, user: JuyouUser): JuyouUser {
   const fields = Object.keys(user);
@@ -33,24 +33,24 @@ export async function login(req: LoginRequest): Promise<JuyouUser> {
   return logLoginResponse("密码", user);
 }
 
-export async function loginByPhoneCode(
-  req: PhoneCodeLoginRequest,
+export async function loginByEmailCode(
+  req: EmailCodeLoginRequest,
 ): Promise<JuyouUser> {
   const { turnstile, ...body } = req;
-  const user = await request<JuyouUser>("/api/user/login/phone-code", {
+  const user = await request<JuyouUser>("/api/user/login/email-code", {
     method: "POST",
     body,
     query: { turnstile },
   });
-  return logLoginResponse("手机验证码", user);
+  return logLoginResponse("邮箱验证码", user);
 }
 
-export async function sendPhoneLoginCode(
-  req: SendPhoneCodeRequest,
+export async function sendEmailLoginCode(
+  req: SendEmailCodeRequest,
 ): Promise<void> {
-  const { phone, turnstile } = req;
-  await request<null>(PHONE_LOGIN_CODE_ENDPOINT, {
-    query: { phone, turnstile },
+  const { email, turnstile } = req;
+  await request<null>(EMAIL_LOGIN_CODE_ENDPOINT, {
+    query: { email, turnstile },
   });
 }
 
