@@ -30,7 +30,7 @@ pnpm build
 juyou-website/web/dist
 ```
 
-## 后端开发
+## 本地开发
 
 ```bash
 cd juyou-website
@@ -47,10 +47,9 @@ GET /api/download?platform=windows
 GET /api/download?platform=linux
 ```
 
-后端会做简单的 per-IP、per-platform 内存限流，然后 `302` 跳转到配置的 OSS/CDN 下载地址。
+后端会做简单的 per-IP、per-platform 内存限流，然后为私有阿里云 OSS 文件生成临时签名 URL，并通过 `302` 跳转下载。
 
-后端会把 `web/dist` 嵌入到 Rust 二进制里。先构建前端：
-`make dev` 会先执行 `pnpm --dir web build`，再启动 Rust 后端。
+`make dev` 会同时启动 Rust 后端和 Vite 前端开发服务。前端开发服务会把 `/api` 和 `/health` 代理到后端。
 
 ```bash
 cd juyou-website
@@ -60,8 +59,10 @@ make dev
 然后访问：
 
 ```text
-http://127.0.0.1:8010
+http://127.0.0.1:5173
 ```
+
+后端会在 `http://127.0.0.1:8010` 启动。正式构建时，`make build` 会先打包前端，再把 `web/dist` 嵌入到 Rust 二进制里。
 
 ## 生产部署
 
@@ -84,9 +85,13 @@ make build
 
 ```bash
 BIND_ADDR=0.0.0.0:8010 \
-DOWNLOAD_MAC_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-mac.dmg \
-DOWNLOAD_WINDOWS_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-windows.msi \
-DOWNLOAD_LINUX_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-linux.AppImage \
+OSS_ACCESS_KEY_ID=your-access-key-id \
+OSS_ACCESS_KEY_SECRET=your-access-key-secret \
+OSS_BUCKET=juyouapi \
+OSS_ENDPOINT=oss-cn-hangzhou.aliyuncs.com \
+OSS_MAC_OBJECT=downloads/juyou-switcher-v1.0.1-macOS.dmg \
+OSS_WINDOWS_OBJECT=downloads/juyou-switcher-v1.0.1-Windows.msi \
+OSS_LINUX_OBJECT=downloads/juyou-switcher-v1.0.1-Linux-x86_64.deb \
 ./release/juyou-website-backend
 ```
 
@@ -116,14 +121,21 @@ release/juyou-website-backend
 
 注意：`make build` 现在固定生成 Linux x86_64 静态二进制，适合常见 `x86_64` Linux 服务器。服务器如果是 ARM64，需要改 Makefile 里的 `LINUX_TARGET`。
 
-## 下载链接配置
+## 私有 OSS 下载配置
 
 生产环境建议通过环境变量配置：
 
 ```bash
-DOWNLOAD_MAC_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-mac.dmg
-DOWNLOAD_WINDOWS_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-windows.msi
-DOWNLOAD_LINUX_URL=https://download.example.com/juyou-switcher/latest/juyou-switcher-linux.AppImage
+OSS_ACCESS_KEY_ID=your-access-key-id
+OSS_ACCESS_KEY_SECRET=your-access-key-secret
+OSS_BUCKET=juyouapi
+OSS_ENDPOINT=oss-cn-hangzhou.aliyuncs.com
+OSS_SIGN_EXPIRES_SECONDS=300
+
+OSS_MAC_OBJECT=downloads/juyou-switcher-v1.0.1-macOS.dmg
+OSS_WINDOWS_OBJECT=downloads/juyou-switcher-v1.0.1-Windows.msi
+OSS_LINUX_OBJECT=downloads/juyou-switcher-v1.0.1-Linux-x86_64.deb
 ```
 
-前端按钮建议指向后端接口，而不是直接暴露 OSS 原始链接。
+AccessKey 建议使用 RAM 子账号，并且只授予当前 Bucket 下载目录的 `oss:GetObject` 权限。
+前端按钮继续指向后端接口，不直接暴露 OSS 原始链接。

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "聚游助手",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "identifier": "com.juyouswitcher.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -57,15 +57,13 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "juyouswitcher"
-        ]
+        "schemes": ["juyouswitcher"]
       }
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFFMzRGQjk1REM2NjhBNjEKUldSaGltYmNsZnMwSGszVFNGeHluY0pkSHZZaFFRSGZpa2NxZ0tuZHpxZmJQeWpJN2phV1RqQVcK",
       "endpoints": [
-        "https://github.com/yangp0419/juyou-switcher/releases/latest/download/latest.json"
+        "https://juyouapi.oss-cn-hangzhou.aliyuncs.com/juyou-switcher/releases/channels/stable/latest.json"
       ]
     }
   }

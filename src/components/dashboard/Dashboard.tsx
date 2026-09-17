@@ -33,9 +33,11 @@ import {
 import { QuickStartPanel } from "@/components/dashboard/QuickStartPanel";
 import { ApiKeysPanel } from "@/components/dashboard/ApiKeysPanel";
 import { DataPanel } from "@/components/dashboard/DataPanel";
+import type { TokenTrendPoint } from "@/components/dashboard/DataPanel";
 import { ExperiencePanel } from "@/components/dashboard/ExperiencePanel";
 import { AssetsPanel } from "@/components/dashboard/AssetsPanel";
 import { SettingsPanel } from "@/components/dashboard/SettingsPanel";
+import { useUpdate } from "@/contexts/UpdateContext";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAINLAND_PHONE_RE = /^1[3-9]\d{9}$/;
@@ -166,6 +168,7 @@ async function findQuickSetupTokenId(
 }
 
 export function Dashboard() {
+  const { hasUpdate, isInstalling, installUpdate } = useUpdate();
   const [activeView, setActiveView] = useState<DashboardView>("quickStart");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<JuyouUserType | null>(null);
@@ -201,6 +204,7 @@ export function Dashboard() {
   const [logsPage, setLogsPage] = useState(1);
   const [logsTotal, setLogsTotal] = useState(0);
   const [logStats, setLogStats] = useState<LogStat | null>(null);
+  const [tokenTrend, setTokenTrend] = useState<TokenTrendPoint[]>([]);
   const [selectedTimeRange, setSelectedTimeRange] = useState<
     "today" | "yesterday" | "week" | "month"
   >("today");
@@ -312,6 +316,7 @@ export function Dashboard() {
       setLogsPage(1);
       loadLogStats("today");
       loadLogs("today", 1);
+      loadTokenTrend();
     }
   }, [activeView, isLoggedIn]);
 
@@ -662,6 +667,48 @@ export function Dashboard() {
     } catch (err: any) {
       console.error("[数据面板] 加载统计失败:", err);
       toast.error(err.message || "加载统计失败");
+    }
+  };
+
+  const loadTokenTrend = async () => {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const end = now;
+      const start = now - 180 * 24 * 3600;
+      const result = await JuyouLog.getLogs({
+        page: 1,
+        page_size: 1000,
+        start_time: start,
+        end_time: end,
+      });
+      const totals = new Map<string, TokenTrendPoint>();
+      for (let offset = 179; offset >= 0; offset -= 1) {
+        const date = new Date((now - offset * 24 * 3600) * 1000);
+        const key = date.toISOString().slice(0, 10);
+        const label = date.toLocaleDateString("zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+        });
+        totals.set(key, {
+          label,
+          tokens: 0,
+          weekday: (date.getDay() + 6) % 7,
+          isToday: offset === 0,
+        });
+      }
+      for (const log of result.items) {
+        const date = new Date(log.created_at * 1000);
+        const key = date.toISOString().slice(0, 10);
+        if (totals.has(key)) {
+          const point = totals.get(key)!;
+          point.tokens +=
+            (log.prompt_tokens || 0) + (log.completion_tokens || 0);
+        }
+      }
+      setTokenTrend(Array.from(totals.values()));
+    } catch (err) {
+      console.error("[数据面板] 加载 Token 趋势失败:", err);
+      setTokenTrend([]);
     }
   };
 
@@ -1118,6 +1165,15 @@ export function Dashboard() {
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenLogin={() => setShowLoginModal(true)}
+          hasUpdate={hasUpdate}
+          isInstallingUpdate={isInstalling}
+          onInstallUpdate={() => {
+            void installUpdate().catch((error) => {
+              toast.error(
+                error instanceof Error ? error.message : "安装更新失败",
+              );
+            });
+          }}
         />
 
         <section className="relative flex min-w-0 flex-1 flex-col">
@@ -1171,6 +1227,7 @@ export function Dashboard() {
               logsPage={logsPage}
               logsPageSize={LOGS_PAGE_SIZE}
               logsTotal={logsTotal}
+              tokenTrend={tokenTrend}
               selectedTimeRange={selectedTimeRange}
               setSelectedTimeRange={setSelectedTimeRange}
               loadLogStats={loadLogStats}
@@ -1178,6 +1235,7 @@ export function Dashboard() {
               onRefresh={() => {
                 loadLogStats(selectedTimeRange);
                 loadLogs(selectedTimeRange, logsPage);
+                loadTokenTrend();
               }}
             />
           ) : activeView === "assets" ? (

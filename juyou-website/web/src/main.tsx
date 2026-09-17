@@ -6,8 +6,8 @@ import {
   CheckCircle2,
   Code2,
   Download,
+  ExternalLink,
   Github,
-  HardDriveDownload,
   Layers3,
   Monitor,
   PackageCheck,
@@ -21,6 +21,7 @@ import "./styles.css";
 import logoUrl from "./logo.png";
 
 const repoUrl = "https://github.com/yangp0419/juyou-switcher";
+const officialSiteUrl = "https://api.juyouhuyu.top";
 const downloadApiBase = import.meta.env.VITE_DOWNLOAD_API_BASE ?? "";
 
 const downloadUrls = {
@@ -49,7 +50,7 @@ const platforms = [
   },
   {
     name: "macOS",
-    package: "DMG 安装包 / Homebrew",
+    package: "DMG 安装包",
     requirement: "macOS 12 Monterey 及以上",
     downloadUrl: downloadUrls.mac,
     icon: PackageCheck,
@@ -67,37 +68,37 @@ const platforms = [
 
 const features = [
   {
-    title: "多工具统一接管",
+    title: "三款工具统一接管",
     description:
-      "在单一界面中无缝管理 Claude Code、Claude Desktop、Codex、Gemini CLI、OpenCode、OpenClaw 和 Hermes，支持快速热切换。",
+      "在单一界面中管理 Codex、Claude Code 与 OpenCode 的本地配置，减少反复查路径、改文件的琐碎操作。",
     icon: Layers3,
     accent: "blue",
   },
   {
-    title: "50+ 预设与一键配置",
+    title: "一键初始化配置",
     description:
-      "内置官方登录、AWS Bedrock、NVIDIA NIM 及主流中转预设；支持秒级扫描并导入本地已有配置，告别手动编辑烦恼。",
+      "自动识别常用配置位置，帮助你快速导入或创建 Codex、Claude Code、OpenCode 的基础配置。",
     icon: Sparkles,
     accent: "violet",
   },
   {
-    title: "统一 MCP 与 Skills 同步",
+    title: "配置同步更清晰",
     description:
-      "可视化管理 Prompts 与 Skills；通过软链接支持跨应用双向同步，并提供 Deep Link 一键导入生态。",
+      "把分散在不同目录的配置集中展示，关键字段一眼可查，调整后更容易确认当前生效状态。",
     icon: Code2,
     accent: "teal",
   },
   {
-    title: "本地代理与故障转移",
+    title: "系统托盘快速切换",
     description:
-      "提供本地高可用代理接管，支持自动 Failover 故障转移、服务商健康监控与智能整流，适合复杂模型路由。",
+      "常用操作放进系统托盘，快速启用目标工具配置，不必每次都打开目录手动修改。",
     icon: Zap,
     accent: "rose",
   },
   {
-    title: "用量监控与成本审计",
+    title: "本地状态可视化",
     description:
-      "可视化用量仪表盘，跨供应商统计 Token 消耗、消费趋势及详细请求日志，支持自定义模型定价。",
+      "用清晰的界面展示当前启用工具、配置来源和最近变更，避免多个配置文件互相覆盖。",
     icon: BarChart3,
     accent: "amber",
   },
@@ -114,17 +115,17 @@ const steps = [
   {
     number: "01",
     title: "下载安装",
-    description: "选择适合您操作系统（Windows/macOS/Linux）的安装包下载，或在 macOS 上使用 Homebrew 快捷安装。",
+    description: "选择适合您操作系统（Windows/macOS/Linux）的安装包下载并完成安装。",
   },
   {
     number: "02",
     title: "一键配置导入",
-    description: "首次打开可一键扫描并自动迁移本地已有的 Claude 或 Codex 配置，也可从 50+ 预设中选择添加。",
+    description: "首次打开可扫描并导入本地已有的 Codex、Claude Code 或 OpenCode 配置。",
   },
   {
     number: "03",
     title: "即时热切换",
-    description: "在主界面或系统托盘菜单一键启用新供应商，无缝热更新，即时应用于您的 AI 开发工作流。",
+    description: "在主界面或系统托盘菜单快速启用目标工具配置，让日常 AI 编程工作流更顺手。",
   },
 ];
 
@@ -132,12 +133,12 @@ const faqs = [
   {
     question: "聚游助手支持哪些 AI 编程工具？",
     answer:
-      "全面支持 Claude Code、Claude Desktop、Codex、Gemini CLI、OpenCode、OpenClaw 以及 Hermes Agent 的配置管理。",
+      "当前聚焦支持 Codex、Claude Code 与 OpenCode，围绕这三款工具提供配置导入、切换和本地管理。",
   },
   {
-    question: "切换供应商后需要重启终端生效吗？",
+    question: "切换配置后需要重启终端生效吗？",
     answer:
-      "大部分 CLI 工具需要重启终端或应用生效，但本地代理热切换以及部分支持热更的场景（如 Claude Code）可实现免重启无缝切换。",
+      "这取决于对应工具读取配置的方式。聚游助手会尽量减少手动步骤；如果工具本身要求重新读取配置，重启终端或应用后即可生效。",
   },
   {
     question: "我的数据存储在哪里？安全吗？",
@@ -152,13 +153,7 @@ const faqs = [
 ];
 
 function Logo() {
-  return (
-    <img
-      src={logoUrl}
-      className="logo-mark"
-      alt="聚游助手"
-    />
-  );
+  return <img src={logoUrl} className="logo-mark" alt="聚游助手" />;
 }
 
 function ButtonLink({
@@ -184,9 +179,9 @@ function ButtonLink({
 
 function ProductPreview() {
   const providers = [
-    { name: "OpenAI Official", meta: "官方登录 · 可切换", active: true },
-    { name: "Kimi K2.7 Code", meta: "第三方供应商 · 代理接管", active: false },
-    { name: "Volcengine Ark", meta: "模型路由 · 自动故障转移", active: false },
+    { name: "Codex", meta: "已导入 · 当前启用", active: true },
+    { name: "Claude Code", meta: "配置就绪 · 可切换", active: false },
+    { name: "OpenCode", meta: "配置就绪 · 可切换", active: false },
   ];
 
   return (
@@ -198,7 +193,7 @@ function ProductPreview() {
       </div>
       <div className="mock-shell">
         <aside className="mock-sidebar">
-          {["Claude", "Codex", "Gemini", "OpenCode", "Hermes"].map((item) => (
+          {["Codex", "Claude Code", "OpenCode"].map((item) => (
             <span className={item === "Codex" ? "active" : ""} key={item}>
               {item}
             </span>
@@ -206,7 +201,7 @@ function ProductPreview() {
         </aside>
         <main className="mock-main">
           <div className="mock-head">
-            <h3>供应商总览</h3>
+            <h3>工具配置总览</h3>
             <span>已启用 Codex</span>
           </div>
           <div className="provider-list">
@@ -227,8 +222,8 @@ function ProductPreview() {
           </div>
           <div className="usage-card">
             <div className="usage-head">
-              <strong>本月用量趋势</strong>
-              <span>+18.4%</span>
+              <strong>配置变更记录</strong>
+              <span>已同步</span>
             </div>
             <div className="bars">
               {[36, 58, 42, 70, 50, 62, 78].map((height, index) => (
@@ -264,10 +259,16 @@ function App() {
               </a>
             ))}
           </nav>
-          <ButtonLink href={primaryDownloadUrl}>
-            <Download size={16} />
-            立即下载
-          </ButtonLink>
+          <div className="header-actions">
+            <ButtonLink href={officialSiteUrl} tone="light">
+              <ExternalLink size={16} />
+              官网入口
+            </ButtonLink>
+            <ButtonLink href={primaryDownloadUrl}>
+              <Download size={16} />
+              立即下载
+            </ButtonLink>
+          </div>
         </div>
       </header>
 
@@ -278,11 +279,10 @@ function App() {
               <CheckCircle2 size={16} />
               适用于 Windows / macOS / Linux
             </div>
-            <h1 className="animate-fade-in-up delay-1">一个应用，管理所有 AI 编程工具</h1>
-            <p className="animate-fade-in-up delay-2">
-              基于 Tauri 2 与 Rust 构建的原生跨平台桌面应用。一站式可视化托管 Claude Code、Claude Desktop、Codex、Gemini CLI、OpenCode、OpenClaw 和 Hermes 的 API 路由、MCP 同步与 Token 用量追踪，告别繁琐的手动编辑配置文件。
-            </p>
-            <div className="hero-actions animate-fade-in-up delay-3">
+            <h1 className="animate-fade-in-up delay-1">
+              一键配置 Codex、Claude Code 与 OpenCode
+            </h1>
+            <div className="hero-actions animate-fade-in-up delay-2">
               <ButtonLink href={downloadUrls.windows}>
                 <Monitor size={20} />
                 下载 Windows 版
@@ -296,8 +296,8 @@ function App() {
                 下载 Linux 版
               </ButtonLink>
             </div>
-            <div className="trust-row animate-fade-in-up delay-4">
-              <span>50+ 供应商预设</span>
+            <div className="trust-row animate-fade-in-up delay-3">
+              <span>三款工具统一配置</span>
               <span>系统托盘快速切换</span>
               <span>SQLite 原子写入保护配置</span>
             </div>
@@ -315,7 +315,7 @@ function App() {
               <div>
                 <h2>选择适合你的安装方式</h2>
                 <p>
-                  根据您的操作系统环境选择对应的二进制安装包下载，或使用 Homebrew 命令行快捷安装。
+                  根据您的操作系统环境选择对应的安装包下载，完成安装后即可开始配置。
                 </p>
               </div>
               <ButtonLink href={repoUrl} tone="light">
@@ -383,7 +383,7 @@ function App() {
             <div>
               <h2>三步完成安装与首次配置</h2>
               <p className="section-subtitle">
-                把“下载安装”和“快速开始”放在同一视野，降低新用户从下载到成功切换供应商的阻力。
+                把“下载安装”和“快速开始”放在同一视野，降低新用户从下载到完成工具配置的阻力。
               </p>
               <div className="steps">
                 {steps.map((step) => (
@@ -395,18 +395,6 @@ function App() {
                 ))}
               </div>
             </div>
-            <div className="terminal-card">
-              <h3>
-                <Terminal size={20} />
-                macOS 快速安装
-              </h3>
-              <pre>
-                <code>{`$ brew install --cask juyou-switcher\n$ brew upgrade --cask juyou-switcher`}</code>
-              </pre>
-              <p>
-                Windows / Linux 用户可在下载区选择 MSI、Portable ZIP、AppImage、deb 或 rpm。
-              </p>
-            </div>
           </div>
         </section>
 
@@ -415,7 +403,7 @@ function App() {
             <div className="cta">
               <div>
                 <h2>准备好把 AI 编程工具配置交给一个工作台了吗？</h2>
-                <p>立即下载聚游助手，开始统一管理供应商、MCP、Skills、用量与会话。</p>
+                <p>立即下载聚游助手，统一管理 Codex、Claude Code 与 OpenCode 的本地配置。</p>
               </div>
               <ButtonLink href={primaryDownloadUrl} tone="light">
                 下载 Windows 版
@@ -440,7 +428,7 @@ function App() {
               <Logo />
               <span>聚游助手</span>
             </a>
-            <p>Claude Code、Codex、Gemini CLI 等 AI 编程工具的全方位管理工具。</p>
+            <p>Codex、Claude Code、OpenCode 的本地配置管理工具。</p>
           </div>
           <div className="footer-links">
             <a href="#download">下载</a>

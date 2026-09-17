@@ -7,11 +7,13 @@ import {
   Settings,
   UserCircle,
   Wallet,
+  LoaderCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { JuyouUser as JuyouUserType } from "@/services/backend/types";
 import appIcon from "../../../src-tauri/icons/128x128.png";
+import packageJson from "../../../package.json";
 
 export type DashboardView =
   | "quickStart"
@@ -31,6 +33,9 @@ interface DashboardSidebarProps {
   currentUser: JuyouUserType | null;
   onLogout: () => void;
   onOpenLogin: () => void;
+  hasUpdate: boolean;
+  isInstallingUpdate: boolean;
+  onInstallUpdate: () => void;
 }
 
 const setupNavItems = [
@@ -50,6 +55,9 @@ export function DashboardSidebar({
   currentUser,
   onLogout,
   onOpenLogin,
+  hasUpdate,
+  isInstallingUpdate,
+  onInstallUpdate,
 }: DashboardSidebarProps) {
   return (
     <aside className="flex w-[220px] shrink-0 flex-col border-r border-[#dbe4ef] bg-[#f8fafc] px-4 pb-4 pt-12">
@@ -58,10 +66,27 @@ export function DashboardSidebar({
           <img src={appIcon} alt="" className="h-7 w-7 rounded-lg" />
         </div>
         <div>
-          <div className="text-sm font-bold tracking-tight text-[#101828]">
-            聚游助手
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-bold tracking-tight text-[#101828]">
+              聚游助手
+            </div>
+            <span className="rounded-full bg-[#eaf3ff] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#0b65d8]">
+              v{packageJson.version}
+            </span>
           </div>
-          <div className="text-xs text-[#98a2b3]">聚游 API 的 Agent 助手</div>
+          {hasUpdate && (
+            <button
+              type="button"
+              onClick={onInstallUpdate}
+              disabled={isInstallingUpdate}
+              className="mt-1 inline-flex items-center gap-1 rounded-md bg-[#eaf3ff] px-2 py-0.5 text-[11px] font-semibold text-[#0b65d8] transition-colors hover:bg-[#dbeafe] disabled:cursor-wait disabled:opacity-70"
+            >
+              {isInstallingUpdate && (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              )}
+              {isInstallingUpdate ? "更新中..." : "更新"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -104,8 +129,17 @@ export function DashboardSidebar({
                 <div className="text-sm font-semibold text-[#344054]">
                   {currentUser?.display_name || currentUser?.username || "用户"}
                 </div>
-                <div className="text-[11px] text-[#98a2b3]">
-                  余额: ¥{((currentUser?.quota || 0) / 500000).toFixed(2)}
+                <div className="flex items-center gap-2 text-[11px] text-[#98a2b3]">
+                  <span>
+                    余额: ¥{((currentUser?.quota || 0) / 500000).toFixed(2)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveView("assets")}
+                    className="inline-flex h-5 items-center rounded-full bg-[#1677e8] px-2 text-[10px] font-bold text-white shadow-sm shadow-blue-500/25 transition-colors hover:bg-[#095ac2]"
+                  >
+                    充值
+                  </button>
                 </div>
               </div>
             </div>

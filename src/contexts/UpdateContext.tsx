@@ -8,12 +8,14 @@ import React, {
 } from "react";
 import type { UpdateInfo } from "../lib/updater";
 import { checkForUpdate } from "../lib/updater";
+import { settingsApi } from "../lib/api/settings";
 
 interface UpdateContextValue {
   // 更新状态
   hasUpdate: boolean;
   updateInfo: UpdateInfo | null;
   isChecking: boolean;
+  isInstalling: boolean;
   error: string | null;
 
   // 提示状态
@@ -22,6 +24,7 @@ interface UpdateContextValue {
 
   // 操作方法
   checkUpdate: () => Promise<boolean>;
+  installUpdate: () => Promise<boolean>;
   resetDismiss: () => void;
 }
 
@@ -34,6 +37,7 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
   const [hasUpdate, setHasUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -109,6 +113,21 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [updateInfo?.availableVersion]);
 
+  const installUpdate = useCallback(async () => {
+    if (isInstalling) return false;
+    setIsInstalling(true);
+    setError(null);
+    try {
+      return await settingsApi.installUpdateAndRestart();
+    } catch (err) {
+      console.error("安装更新失败:", err);
+      setError(err instanceof Error ? err.message : "安装更新失败");
+      throw err;
+    } finally {
+      setIsInstalling(false);
+    }
+  }, [isInstalling]);
+
   const resetDismiss = useCallback(() => {
     setIsDismissed(false);
     localStorage.removeItem(DISMISSED_VERSION_KEY);
@@ -129,10 +148,12 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
     hasUpdate,
     updateInfo,
     isChecking,
+    isInstalling,
     error,
     isDismissed,
     dismissUpdate,
     checkUpdate,
+    installUpdate,
     resetDismiss,
   };
 

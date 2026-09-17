@@ -246,6 +246,12 @@ nav a:hover::after {
   transform-origin: left;
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+}
+
 /* Premium Button Links */
 .button-link {
   display: inline-flex;
@@ -820,10 +826,8 @@ h2 {
 
 /* Installation Grid & Timeline */
 .install-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 64px;
-  align-items: center;
+  display: block;
+  max-width: 820px;
 }
 
 .steps {
@@ -882,54 +886,6 @@ h2 {
 
 .step-content {
   flex: 1;
-}
-
-/* macOS Hybrid Dark Terminal (Looks super professional next to light cards) */
-.terminal-card {
-  border-radius: 12px;
-  background: #090d16;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 28px;
-  box-shadow: 
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 24px 50px rgba(15, 23, 42, 0.25);
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.terminal-card h3 {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  color: white;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.terminal-card h3 svg {
-  color: #34d399;
-}
-
-pre {
-  overflow-x: auto;
-  margin-top: 20px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 16px;
-  color: #38bdf8; /* Soft blue terminal code text */
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-pre code {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.terminal-card p {
-  margin-top: 20px;
-  color: #94a3b8;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 /* Call to Action with Premium Gradient Banner */
@@ -1114,13 +1070,8 @@ footer {
 
   .platform-grid,
   .feature-grid,
-  .faq-grid,
-  .install-grid {
+  .faq-grid {
     grid-template-columns: 1fr;
-  }
-
-  .install-grid {
-    gap: 40px;
   }
 
   .section-head {
@@ -1159,6 +1110,10 @@ footer {
     min-height: 38px;
     padding-inline: 14px;
     font-size: 13px;
+  }
+
+  .header-actions {
+    gap: 12px;
   }
 
   h1 {

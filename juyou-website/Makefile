@@ -6,8 +6,12 @@ TARGET_BINARY := target/$(LINUX_TARGET)/release/$(APP_NAME)
 
 .PHONY: dev build web backend check-cross clean
 
-dev: web
-	cargo run
+dev:
+	@set -e; \
+	cargo run & \
+	BACKEND_PID=$$!; \
+	trap 'kill $$BACKEND_PID 2>/dev/null || true' INT TERM EXIT; \
+	pnpm --dir web dev
 
 build: clean check-cross web backend
 	@mkdir -p "$(RELEASE_DIR)"

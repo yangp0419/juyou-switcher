@@ -4,28 +4,43 @@ use std::{
     net::{IpAddr, SocketAddr},
     str::FromStr,
     sync::{Arc, Mutex},
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use axum::{
     extract::{ConnectInfo, Query, State},
     http::{
         header::{HeaderValue, CACHE_CONTROL, CONTENT_TYPE, LOCATION},
-        HeaderMap,
-        StatusCode,
+        HeaderMap, StatusCode,
     },
     response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
+use base64::{engine::general_purpose, Engine as _};
+use hmac::{Hmac, Mac};
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS, NON_ALPHANUMERIC};
 use serde::{Deserialize, Serialize};
+use sha1::Sha1;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, warn};
-use url::Url;
 
 const DEFAULT_BIND_ADDR: &str = "127.0.0.1:8010";
 const DEFAULT_LIMIT_PER_MINUTE: u32 = 8;
 const DEFAULT_LIMIT_PER_HOUR: u32 = 60;
+const DEFAULT_OSS_SIGN_EXPIRES_SECONDS: u64 = 300;
+const OSS_PATH_SEGMENT_ENCODE_SET: &AsciiSet = &CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'#')
+    .add(b'%')
+    .add(b'<')
+    .add(b'>')
+    .add(b'?')
+    .add(b'`')
+    .add(b'{')
+    .add(b'}');
+type HmacSha1 = Hmac<Sha1>;
 
 #[derive(rust_embed::RustEmbed)]
 #[folder = "web/dist"]
@@ -39,9 +54,19 @@ struct AppState {
 
 #[derive(Clone)]
 struct DownloadConfig {
-    mac: String,
-    windows: String,
-    linux: String,
+    oss: OssConfig,
+    mac_object: String,
+    windows_object: String,
+    linux_object: String,
+}
+
+#[derive(Clone)]
+struct OssConfig {
+    access_key_id: String,
+    access_key_secret: String,
+    bucket: String,
+    endpoint: String,
+    expires_seconds: u64,
 }
 
 #[derive(Clone)]
@@ -109,7 +134,8 @@ async fn main() {
         .layer(TraceLayer::new_for_http());
 
     let addr = env::var("BIND_ADDR").unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_string());
-    let addr = SocketAddr::from_str(&addr).expect("BIND_ADDR must be host:port, e.g. 127.0.0.1:8080");
+    let addr =
+        SocketAddr::from_str(&addr).expect("BIND_ADDR must be host:port, e.g. 127.0.0.1:8080");
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .expect("failed to bind backend address");
@@ -158,8 +184,19 @@ async fn download(
         return error(StatusCode::TOO_MANY_REQUESTS, "rate_limited", message);
     }
 
-    let target = state.downloads.url_for(query.platform);
-    match HeaderValue::from_str(target) {
+    let target = match state.downloads.signed_url_for(query.platform) {
+        Ok(target) => target,
+        Err(message) => {
+            warn!(platform = ?query.platform, %message, "failed to sign download url");
+            return error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "download_sign_failed",
+                message,
+            );
+        }
+    };
+
+    match HeaderValue::from_str(&target) {
         Ok(location) => {
             info!(%ip, platform = ?query.platform, %target, "download redirect");
             (StatusCode::FOUND, [(LOCATION, location)]).into_response()
@@ -181,41 +218,84 @@ fn serve_embedded_asset(path: &str) -> Option<Response> {
         "public, max-age=31536000, immutable"
     };
 
-    Some((
-        StatusCode::OK,
-        [
-            (CONTENT_TYPE, HeaderValue::from_str(mime.as_ref()).ok()?),
-            (CACHE_CONTROL, HeaderValue::from_static(cache_control)),
-        ],
-        asset.data.into_owned(),
+    Some(
+        (
+            StatusCode::OK,
+            [
+                (CONTENT_TYPE, HeaderValue::from_str(mime.as_ref()).ok()?),
+                (CACHE_CONTROL, HeaderValue::from_static(cache_control)),
+            ],
+            asset.data.into_owned(),
+        )
+            .into_response(),
     )
-        .into_response())
 }
 
 impl DownloadConfig {
     fn from_env() -> Self {
         Self {
-            mac: env_url(
-                "DOWNLOAD_MAC_URL",
-                "https://your-oss-domain.com/juyou-switcher/latest/juyou-switcher-mac.dmg",
-            ),
-            windows: env_url(
-                "DOWNLOAD_WINDOWS_URL",
-                "https://your-oss-domain.com/juyou-switcher/latest/juyou-switcher-windows.msi",
-            ),
-            linux: env_url(
-                "DOWNLOAD_LINUX_URL",
-                "https://your-oss-domain.com/juyou-switcher/latest/juyou-switcher-linux.AppImage",
-            ),
+            oss: OssConfig::from_env(),
+            mac_object: env_required("OSS_MAC_OBJECT"),
+            windows_object: env_required("OSS_WINDOWS_OBJECT"),
+            linux_object: env_required("OSS_LINUX_OBJECT"),
         }
     }
 
-    fn url_for(&self, platform: Platform) -> &str {
+    fn signed_url_for(&self, platform: Platform) -> Result<String, String> {
+        self.oss.sign_get_url(self.object_for(platform))
+    }
+
+    fn object_for(&self, platform: Platform) -> &str {
         match platform {
-            Platform::Mac => &self.mac,
-            Platform::Windows => &self.windows,
-            Platform::Linux => &self.linux,
+            Platform::Mac => &self.mac_object,
+            Platform::Windows => &self.windows_object,
+            Platform::Linux => &self.linux_object,
         }
+    }
+}
+
+impl OssConfig {
+    fn from_env() -> Self {
+        let endpoint = env_required("OSS_ENDPOINT")
+            .trim()
+            .trim_start_matches("https://")
+            .trim_start_matches("http://")
+            .trim_end_matches('/')
+            .to_string();
+
+        Self {
+            access_key_id: env_required("OSS_ACCESS_KEY_ID"),
+            access_key_secret: env_required("OSS_ACCESS_KEY_SECRET"),
+            bucket: env_required("OSS_BUCKET"),
+            endpoint,
+            expires_seconds: env_u64("OSS_SIGN_EXPIRES_SECONDS", DEFAULT_OSS_SIGN_EXPIRES_SECONDS),
+        }
+    }
+
+    fn sign_get_url(&self, object: &str) -> Result<String, String> {
+        let object = object.trim_start_matches('/');
+        let expires = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|err| format!("system clock is before unix epoch: {err}"))?
+            .as_secs()
+            + self.expires_seconds;
+        let canonical_resource = format!("/{}/{}", self.bucket, object);
+        let string_to_sign = format!("GET\n\n\n{expires}\n{canonical_resource}");
+
+        let mut mac = HmacSha1::new_from_slice(self.access_key_secret.as_bytes())
+            .map_err(|err| format!("failed to initialize OSS signer: {err}"))?;
+        mac.update(string_to_sign.as_bytes());
+        let signature = general_purpose::STANDARD.encode(mac.finalize().into_bytes());
+
+        Ok(format!(
+            "https://{}.{}{}?OSSAccessKeyId={}&Expires={}&Signature={}",
+            self.bucket,
+            self.endpoint,
+            encode_path(&format!("/{}", object)),
+            encode_query_value(&self.access_key_id),
+            expires,
+            encode_query_value(&signature)
+        ))
     }
 }
 
@@ -270,10 +350,11 @@ impl RateLimiter {
     }
 }
 
-fn env_url(key: &str, fallback: &str) -> String {
-    let value = env::var(key).unwrap_or_else(|_| fallback.to_string());
-    Url::parse(&value).unwrap_or_else(|_| panic!("{key} must be a valid absolute URL"));
-    value
+fn env_required(key: &str) -> String {
+    env::var(key)
+        .unwrap_or_else(|_| panic!("{key} must be set"))
+        .trim()
+        .to_string()
 }
 
 fn env_u32(key: &str, fallback: u32) -> u32 {
@@ -281,6 +362,24 @@ fn env_u32(key: &str, fallback: u32) -> u32 {
         .ok()
         .and_then(|value| value.parse::<u32>().ok())
         .unwrap_or(fallback)
+}
+
+fn env_u64(key: &str, fallback: u64) -> u64 {
+    env::var(key)
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .unwrap_or(fallback)
+}
+
+fn encode_path(path: &str) -> String {
+    path.split('/')
+        .map(|segment| utf8_percent_encode(segment, OSS_PATH_SEGMENT_ENCODE_SET).to_string())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+fn encode_query_value(value: &str) -> String {
+    utf8_percent_encode(value, NON_ALPHANUMERIC).to_string()
 }
 
 fn client_ip(headers: &HeaderMap) -> Option<IpAddr> {
@@ -300,7 +399,14 @@ fn client_ip(headers: &HeaderMap) -> Option<IpAddr> {
 }
 
 fn error(status: StatusCode, code: &'static str, message: String) -> Response {
-    (status, Json(ErrorResponse { error: code, message })).into_response()
+    (
+        status,
+        Json(ErrorResponse {
+            error: code,
+            message,
+        }),
+    )
+        .into_response()
 }
 
 async fn shutdown_signal() {

@@ -1,18 +1,21 @@
 {
   "name": "juyou-switcher",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "All-in-One Assistant for Claude Code, Codex & Gemini CLI",
   "type": "module",
   "scripts": {
     "dev": "pnpm tauri dev",
     "build": "pnpm tauri build",
+    "release:local": "node scripts/release.mjs",
     "tauri": "tauri",
     "dev:renderer": "vite",
     "build:renderer": "vite build",
     "typecheck": "tsc --noEmit",
+    "version:check": "node scripts/release.mjs --check-version",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json}\"",
     "test:unit": "vitest run",
+    "test:release": "vitest run scripts/release/*.test.mjs",
     "test:unit:watch": "vitest watch"
   },
   "keywords": [],

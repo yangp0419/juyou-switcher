@@ -13,6 +13,22 @@ import type { JuyouLog as JuyouLogType } from "@/services/backend/types";
 
 type TimeRange = "today" | "yesterday" | "week" | "month";
 
+export interface TokenTrendPoint {
+  label: string;
+  tokens: number;
+  weekday: number;
+  isToday?: boolean;
+}
+
+function trendCellColor(tokens: number, maxTokens: number): string {
+  if (tokens <= 0) return "#eef2f6";
+  const ratio = maxTokens > 0 ? tokens / maxTokens : 0;
+  if (ratio >= 0.75) return "#1677e8";
+  if (ratio >= 0.5) return "#5b9cf0";
+  if (ratio >= 0.25) return "#9bc4f7";
+  return "#cfe3fb";
+}
+
 function formatRelativeTime(timestamp: number): string {
   const seconds = Math.max(0, Math.floor(Date.now() / 1000) - timestamp);
   if (seconds < 60) return "刚刚";
@@ -62,6 +78,7 @@ interface DataPanelProps {
   logsPage: number;
   logsPageSize: number;
   logsTotal: number;
+  tokenTrend: TokenTrendPoint[];
   selectedTimeRange: TimeRange;
   setSelectedTimeRange: Dispatch<SetStateAction<TimeRange>>;
   loadLogStats: (range: TimeRange) => void;
@@ -76,6 +93,7 @@ export function DataPanel({
   logsPage,
   logsPageSize,
   logsTotal,
+  tokenTrend,
   selectedTimeRange,
   setSelectedTimeRange,
   loadLogStats,
@@ -123,7 +141,7 @@ export function DataPanel({
         </div>
       </div>
 
-      <div className="mb-6 flex gap-2">
+      <div className="order-2 mb-6 flex gap-2">
         {[
           { label: "今日", value: "today" as const },
           { label: "昨日", value: "yesterday" as const },
@@ -146,7 +164,111 @@ export function DataPanel({
         ))}
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="order-1 mb-6 min-h-[190px] shrink-0 overflow-hidden rounded-xl border border-[#e4e9f2] bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#edf2f7] px-6 py-4">
+          <h2 className="text-base font-bold text-[#202939]">Token 消耗趋势</h2>
+          <button
+            type="button"
+            className="text-xs font-semibold text-[#98a2b3] hover:text-[#667085]"
+          >
+            最近半年
+          </button>
+        </div>
+        {tokenTrend.length > 0 ? (
+          <div className="px-6 py-4">
+            <div
+              className="flex items-start gap-3"
+              role="img"
+              aria-label="最近半年 Token 消耗趋势"
+            >
+              <div className="grid grid-rows-7 gap-1 text-[10px] leading-[14px] text-[#98a2b3]">
+                <span>周一</span>
+                <span>周二</span>
+                <span>周三</span>
+                <span>周四</span>
+                <span>周五</span>
+                <span>周六</span>
+                <span>周日</span>
+              </div>
+              <div className="min-w-0 flex-1 overflow-x-auto pb-1">
+                {(() => {
+                  const firstWeekday = tokenTrend[0]?.weekday ?? 0;
+                  const weekCount = Math.ceil(
+                    (firstWeekday + tokenTrend.length) / 7,
+                  );
+                  const maxTokens = Math.max(
+                    ...tokenTrend.map((item) => item.tokens),
+                    1,
+                  );
+
+                  return (
+                    <div
+                      className="grid w-full grid-flow-col gap-y-1"
+                      style={{
+                        gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))`,
+                        gridTemplateRows: "repeat(7, 14px)",
+                      }}
+                    >
+                      {Array.from({ length: weekCount * 7 }, (_, cellIndex) => {
+                        const dayIndex = cellIndex - firstWeekday;
+                        const point = tokenTrend[dayIndex];
+                        const isEmpty = !point;
+                        return (
+                          <div
+                            key={point?.label ?? `empty-${cellIndex}`}
+                            title={
+                              point
+                                ? `${point.label}：${point.tokens.toLocaleString("en-US")} tokens`
+                                : undefined
+                            }
+                            className={`h-3.5 w-3.5 justify-self-center rounded-[3px] ring-1 ring-black/[0.03] ${
+                              point?.isToday && !isEmpty
+                                ? "ring-2 ring-[#1677e8]"
+                                : ""
+                            }`}
+                            style={{
+                              backgroundColor:
+                                isEmpty || !point
+                                  ? "transparent"
+                                  : trendCellColor(point.tokens, maxTokens),
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+                <div className="mt-1 flex justify-between text-[10px] text-[#98a2b3]">
+                  <span>{tokenTrend[0]?.label}</span>
+                  <span>{tokenTrend[tokenTrend.length - 1]?.label}</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[11px] text-[#98a2b3]">
+              <span>Token 数 · 最近半年</span>
+              <span className="flex items-center gap-1.5">
+                少
+                {["#eef2f6", "#cfe3fb", "#9bc4f7", "#5b9cf0", "#1677e8"].map(
+                  (color) => (
+                    <span
+                      key={color}
+                      className="h-3 w-3 rounded-[3px]"
+                      style={{ backgroundColor: color }}
+                    />
+                  ),
+                )}
+                多
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center px-6 py-6 text-sm text-[#98a2b3]">
+            暂无趋势数据
+          </div>
+        )}
+      </div>
+
+      <div className="order-3 mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           {
             icon: Zap,
@@ -184,22 +306,7 @@ export function DataPanel({
         })}
       </div>
 
-      <div className="mb-6 min-h-[190px] shrink-0 overflow-hidden rounded-xl border border-[#e4e9f2] bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-[#edf2f7] px-6 py-4">
-          <h2 className="text-base font-bold text-[#202939]">Token 消耗趋势</h2>
-          <button
-            type="button"
-            className="text-xs font-semibold text-[#98a2b3] hover:text-[#667085]"
-          >
-            最近 7 天
-          </button>
-        </div>
-        <div className="flex h-32 items-center justify-center px-6 py-6 text-sm text-[#98a2b3]">
-          暂无趋势数据
-        </div>
-      </div>
-
-      <div className="min-h-[430px] shrink-0 overflow-hidden rounded-xl border border-[#e4e9f2] bg-white shadow-sm">
+      <div className="order-4 min-h-[430px] shrink-0 overflow-hidden rounded-xl border border-[#e4e9f2] bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-[#edf2f7] px-6 py-4">
           <div>
             <h2 className="text-base font-bold text-[#202939]">调用记录</h2>

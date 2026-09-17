@@ -284,6 +284,10 @@ pnpm build
 pnpm tauri build --debug
 ```
 
+Local cross-platform releases use semantic versions and publish signed updater
+artifacts to Aliyun OSS. See
+[`docs/guides/local-oss-release-zh.md`](docs/guides/local-oss-release-zh.md).
+
 ### Rust Backend Development
 
 ```bash

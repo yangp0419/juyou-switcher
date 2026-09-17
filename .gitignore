@@ -1,6 +1,8 @@
 node_modules/
 dist/
-release/
+/release/
+.release/
+.release.env
 .DS_Store
 *.log
 .env
@@ -11,7 +13,10 @@ CLAUDE.md
 AGENTS.md
 GEMINI.md
 /.claude
-/.codex
+/.codex/*
+!/.codex/skills/
+!/.codex/skills/juyou-release/
+!/.codex/skills/juyou-release/**
 /.gemini
 /.juyou-switcher
 /.idea
